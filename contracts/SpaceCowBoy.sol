@@ -5,14 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-abstract contract BPContract{
-    function protect(
-        address sender, 
-        address receiver, 
-        uint256 amount
-    ) external virtual;
-}
-
 contract SpaceCowBoy is IERC20, Ownable, Pausable {
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -27,9 +19,6 @@ contract SpaceCowBoy is IERC20, Ownable, Pausable {
 
     mapping (address => bool) public isExcluded;
     mapping (address => bool) public isBlacklisted;
-
-    BPContract public BP;
-    bool public bpEnabled;
 
     event TransferFee(address sender, address recipient, uint256 amount);
     event SetFeePercentage(uint8 feePercentage);
@@ -89,14 +78,6 @@ contract SpaceCowBoy is IERC20, Ownable, Pausable {
         return true;
     }
 
-    function setBPAddrss(address _bp) external onlyOwner {
-        BP = BPContract(_bp);
-    }
-
-    function setBpEnabled(bool _enabled) external onlyOwner {
-        bpEnabled = _enabled;
-    }
-
     function pause() external onlyOwner {
         _pause();
     }
@@ -148,10 +129,6 @@ contract SpaceCowBoy is IERC20, Ownable, Pausable {
         require(!isBlacklisted[sender], "SCB: transfer from blacklisted address");
         require(!isBlacklisted[recipient], "SCB: transfer to blacklisted address");
         require(!isBlacklisted[tx.origin], "SCB: transfer called from blacklisted address");
-
-        if (bpEnabled) {
-            BP.protect(sender, recipient, amount);
-        }
 
         uint256 senderBalance = _balances[sender];
         require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
